@@ -28,6 +28,7 @@ services:
       - "traefik.http.routers.sikawan-laravel.rule=Host(`sikawan.texere.studio`)"
       - "traefik.http.routers.sikawan-laravel.entrypoints=websecure"
       - "traefik.http.routers.sikawan-laravel.tls.certresolver=myresolver"
+      - "com.centurylinklabs.watchtower.enable=true"
     networks:
       - sikawan_network
       - traefik_proxy
@@ -49,9 +50,20 @@ services:
       - "traefik.http.routers.sikawan-ai.rule=Host(`ai.texere.studio`)"
       - "traefik.http.routers.sikawan-ai.entrypoints=websecure"
       - "traefik.http.routers.sikawan-ai.tls.certresolver=myresolver"
+      - "com.centurylinklabs.watchtower.enable=true"
     networks:
       - sikawan_network
       - traefik_proxy
+
+  # WATCHTOWER AUTO-UPDATES
+  watchtower:
+    image: containrrr/watchtower:latest
+    restart: unless-stopped
+    command: --label-enable --cleanup --interval 300
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - sikawan_network
 
   # DATABASE POSTGRES
   database:

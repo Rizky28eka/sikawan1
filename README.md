@@ -179,6 +179,10 @@ docker-compose up -d
 
 Pastikan Anda telah menyesuaikan domain dan sertifikat SSL pada label Traefik di `docker-compose.yml`.
 
+Stack ini juga menyertakan Watchtower untuk auto-update image secara berkala. Hanya service yang diberi label `com.centurylinklabs.watchtower.enable=true` yang akan diperbarui, sehingga `laravel-app` dan `ai-service` bisa mengikuti image terbaru tanpa menyentuh database.
+
+Watchtower berjalan dengan interval 5 menit dan membersihkan image lama setelah update berhasil.
+
 ---
 
 ## 📄 Lisensi
