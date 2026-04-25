@@ -25,7 +25,7 @@ services:
       - AI_SERVICE_URL=http://ai.texere.studio
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.sikawan-laravel.rule=Host(`api.texere.studio`)"
+      - "traefik.http.routers.sikawan-laravel.rule=Host(`sikawan.texere.studio`)"
       - "traefik.http.routers.sikawan-laravel.entrypoints=websecure"
       - "traefik.http.routers.sikawan-laravel.tls.certresolver=myresolver"
     networks:
@@ -40,6 +40,10 @@ services:
       context: ./skripsi-presensi-ai
     ports:
       - "8088:8088"
+    volumes:
+      - ./skripsi-presensi-ai/models:/app/models
+      - ./skripsi-presensi-ai/dataset:/app/dataset
+      - ./skripsi-presensi-ai/storage:/app/storage
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.sikawan-ai.rule=Host(`ai.texere.studio`)"
@@ -51,7 +55,9 @@ services:
 
   # DATABASE POSTGRES
   database:
-    image: postgres:15-alpine
+    build:
+      context: ./docker/postgres
+    image: sikawan-postgres-postgis:15
     ports:
       - "5432:5432"
     environment:
