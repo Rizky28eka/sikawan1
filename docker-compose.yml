@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # LARAVEL SERVICE
+  laravel-app:
+    build: 
+      context: ./laravel-presensi
+    ports:
+      - "8000:80"
+    environment:
+      - APP_NAME=Laravel
+      - APP_ENV=production
+      - APP_KEY=base64:E9VCTwp7mNqf35A4BpIzI9V445+HmZAcxA3zCR37xGI=
+      - APP_DEBUG=true
+      - APP_URL=https://api.texere.studio
+      - DB_CONNECTION=pgsql
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_DATABASE=sikawan
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=sikawan_password
+      - SESSION_DRIVER=database
+      - CACHE_STORE=database
+      - QUEUE_CONNECTION=database
+      - AI_SERVICE_URL=http://ai.texere.studio
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sikawan-laravel.rule=Host(`api.texere.studio`)"
+      - "traefik.http.routers.sikawan-laravel.entrypoints=websecure"
+      - "traefik.http.routers.sikawan-laravel.tls.certresolver=myresolver"
+    networks:
+      - sikawan_network
+      - traefik_proxy
+    depends_on:
+      - database
+
+  # PYTHON AI SERVICE
+  ai-service:
+    build: 
+      context: ./skripsi-presensi-ai
+    ports:
+      - "8088:8088"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sikawan-ai.rule=Host(`ai.texere.studio`)"
+      - "traefik.http.routers.sikawan-ai.entrypoints=websecure"
+      - "traefik.http.routers.sikawan-ai.tls.certresolver=myresolver"
+    networks:
+      - sikawan_network
+      - traefik_proxy
+
+  # DATABASE POSTGRES
+  database:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: sikawan
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: sikawan_password
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    networks:
+      - sikawan_network
+
+networks:
+  sikawan_network:
+    external: false
+  traefik_proxy:
+    external: true
+
+volumes:
+  pg-data:

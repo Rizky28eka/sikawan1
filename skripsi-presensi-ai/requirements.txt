@@ -1,0 +1,17 @@
+setuptools<70
+face-recognition-models>=0.3.0
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
+opencv-python>=4.9.0.0
+face-recognition>=1.3.0
+scikit-learn>=1.5.0
+numpy>=1.26.0
+Pillow>=10.0.0
+joblib>=1.4.0
+aiofiles>=23.0.0
+pydantic-settings>=2.2.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+aiohttp>=3.9.0
+psutil>=5.8.0

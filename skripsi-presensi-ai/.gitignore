@@ -1,0 +1,9 @@
+venv/
+.env
+__pycache__/
+*.pyc
+
+# Dataset & Models
+models/*.pkl
+models/*.h5
+dataset/**/skripsi_synth_*
