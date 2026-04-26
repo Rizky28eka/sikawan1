@@ -25,11 +25,23 @@ class SiteSeeder extends Seeder
             ['company_id' => $company->id, 'name' => 'WFH (Work From Home)'],
             [
                 'address' => 'Remote / Anywhere',
-                'latitude' => -6.2088, // Jakarta Pusat as center
+                'latitude' => -6.2088,
                 'longitude' => 106.8456,
-                'radius' => 0, // Radius 0 for WFH is fine since logic skips it
+                'radius' => 0,
                 'status' => true,
                 'is_wfh' => true,
+            ]
+        );
+
+        Site::updateOrCreate(
+            ['company_id' => $company->id, 'name' => 'Bilcode Head Office'],
+            [
+                'address' => 'Sudirman Central Business District (SCBD), Jakarta',
+                'latitude' => -6.2234,
+                'longitude' => 106.8112,
+                'radius' => 50,
+                'status' => true,
+                'is_wfh' => false,
             ]
         );
 

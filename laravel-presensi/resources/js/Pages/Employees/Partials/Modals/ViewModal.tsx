@@ -266,9 +266,9 @@ export default function ViewModal({
                                     </div>
                                     {user.shift && (
                                         <div className="text-muted-foreground">
-                                            {user.shift.base_clock_in?.slice(0, 5)}{" "}
+                                            {user.shift.start_time?.slice(0, 5)}{" "}
                                             -{" "}
-                                            {user.shift.base_clock_out?.slice(0, 5)}
+                                            {user.shift.end_time?.slice(0, 5)}
                                         </div>
                                     )}
                                 </div>

@@ -29,19 +29,19 @@ class HolidaySeeder extends Seeder
             $internalHolidays = [
                 [
                     'name' => 'Company Anniversary (HUT '.$company->company_name.')',
-                    'date' => now()->year.'-11-10', // Contoh 10 November
+                    'date' => '2026-11-10',
                     'type' => 'COMPANY',
                     'description' => 'Hari ulang tahun perusahaan - Libur internal.',
                 ],
                 [
                     'name' => 'Family Gathering & Outing',
-                    'date' => now()->year.'-08-20', // Contoh 20 Agustus
+                    'date' => '2026-08-20',
                     'type' => 'COMPANY',
                     'description' => 'Acara tahunan keluarga besar perusahaan.',
                 ],
                 [
                     'name' => 'Year-End Review & Party',
-                    'date' => now()->year.'-12-30',
+                    'date' => '2026-12-30',
                     'type' => 'COMPANY',
                     'description' => 'Evaluasi akhir tahun dan perayaan internal.',
                 ],

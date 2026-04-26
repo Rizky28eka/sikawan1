@@ -133,6 +133,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Employee Management (EMS)
     Route::get('/employees', [EmployeesController::class, 'index'])->name('employees');
+    Route::get('/employees/{id}', [EmployeesController::class, 'show'])->name('employees.show');
     Route::get('/superadmin/employees', [EmployeesController::class, 'index'])->name('superadmin.employees');
     Route::get('/owner/employees', [EmployeesController::class, 'index'])->name('owner.employees');
     Route::get('/manager/employees', [EmployeesController::class, 'index'])->name('manager.employees');

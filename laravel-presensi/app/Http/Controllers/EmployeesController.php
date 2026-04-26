@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
+use App\Models\Attendance;
 use App\Models\Department;
 use App\Models\Shift;
 use App\Models\Site;
@@ -101,6 +102,49 @@ class EmployeesController extends Controller
                 ->get(['id', 'full_name']),
             'invitations' => $invitations,
             'auth_user' => $user,
+        ]);
+    }
+
+    public function show(string $id): Response
+    {
+        $user = Auth::user();
+        $employee = User::with([
+            'department',
+            'site',
+            'company',
+            'directManager',
+            'shift',
+            'workSchedules',
+            'faceBiometric',
+        ])->withCount('faceBiometric')->findOrFail($id);
+
+        // RBAC Check
+        if ($user->role !== 'SUPERADMIN') {
+            if ($employee->company_id !== $user->company_id) {
+                abort(403, 'Unauthorized');
+            }
+            if ($user->role === 'MANAGER' && $employee->department_id !== $user->department_id) {
+                abort(403, 'Unauthorized');
+            }
+        }
+
+        // Fetch recent attendance
+        $attendances = Attendance::where('user_id', $id)
+            ->with(['site', 'biometric', 'location', 'network'])
+            ->latest('timestamp')
+            ->limit(50)
+            ->get();
+
+        return Inertia::render('Employees/Show', [
+            'employee' => $employee,
+            'attendances' => $attendances,
+            'auth_user' => $user,
+            'departments' => Department::where('company_id', $user->company_id)->get(),
+            'sites' => Site::where('company_id', $user->company_id)->get(),
+            'shifts' => Shift::where('company_id', $user->company_id)->get(),
+            'managers' => User::where('company_id', $user->company_id)
+                ->whereIn('role', ['MANAGER', 'OWNER'])
+                ->get(['id', 'full_name']),
         ]);
     }
 

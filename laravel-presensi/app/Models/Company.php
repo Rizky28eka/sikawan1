@@ -71,4 +71,20 @@ class Company extends Model
     {
         return $this->hasMany(Site::class, 'company_id');
     }
+
+    /**
+     * Get the departments that belong to this company.
+     */
+    public function departments(): HasMany
+    {
+        return $this->hasMany(Department::class, 'company_id');
+    }
+
+    /**
+     * Get the shifts that belong to this company.
+     */
+    public function shifts(): HasMany
+    {
+        return $this->hasMany(Shift::class, 'company_id');
+    }
 }

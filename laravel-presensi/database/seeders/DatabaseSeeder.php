@@ -67,6 +67,16 @@ class DatabaseSeeder extends Seeder
         // 5. Bilcode Organization Data (Departments, Shifts, Schedules)
         $this->call(BilcodeOrganizationSeeder::class);
 
+        // 6. Holidays
+        $this->call(HolidaySeeder::class);
+
+        // 7. Announcements & Notifications
+        $this->call(AnnouncementSeeder::class);
+        $this->call(NotificationSeeder::class);
+
+        // 8. Submissions (Requests)
+        $this->call(SubmissionSeeder::class);
+
         echo "\n🌟 SEEDING COMPLETED — Admin accounts ready:\n";
         echo "   superadmin@test.com  / password123  → SUPERADMIN\n";
         echo "   bilcode@test.com     / password123  → OWNER (Bilcode Digital Solutions)\n";

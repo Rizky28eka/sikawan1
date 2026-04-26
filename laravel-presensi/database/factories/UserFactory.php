@@ -35,8 +35,18 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'role' => 'EMPLOYEE',
-            'company_id' => Company::factory(),
+            'company_id' => null, // Usually set in seeder
             'employee_id' => 'EMP-'.str_pad($employeeCounter++, 4, '0', STR_PAD_LEFT),
+            'department_id' => null,
+            'site_id' => null,
+            'shift_id' => null,
+            'direct_manager_id' => null,
+            'status' => true,
+            'position' => fake()->jobTitle(),
+            'employment_type' => fake()->randomElement(['Permanent', 'Contract', 'Internship', 'Probation']),
+            'join_date' => fake()->date(),
+            'emergency_contact_name' => fake()->name(),
+            'emergency_contact_phone' => fake()->phoneNumber(),
         ];
     }
 

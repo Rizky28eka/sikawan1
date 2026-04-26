@@ -28,8 +28,8 @@ export interface User {
     shift?: {
         id: string;
         name: string;
-        base_clock_in: string;
-        base_clock_out: string;
+        start_time: string;
+        end_time: string;
     } | null;
     work_schedules?: {
         day_of_week: number;

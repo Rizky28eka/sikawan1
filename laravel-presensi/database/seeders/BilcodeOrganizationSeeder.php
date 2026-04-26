@@ -27,7 +27,10 @@ class BilcodeOrganizationSeeder extends Seeder
             return;
         }
 
-        // 2. Buat Master Shift untuk Bilcode
+        // 2. Ambil Owner untuk digunakan sebagai Manager default
+        $owner = User::where('personal_email', 'bilcode@test.com')->first();
+
+        // 3. Buat Master Shift untuk Bilcode
         $shifts = [
             [
                 'name' => 'Regular Morning Shift',
@@ -35,6 +38,11 @@ class BilcodeOrganizationSeeder extends Seeder
                 'end_time' => '17:00',
                 'late_tolerance' => 15,
                 'is_night_shift' => false,
+                'grace_period_check_in' => 10,
+                'grace_period_check_out' => 5,
+                'minimum_work_hours' => 8,
+                'maximum_work_hours' => 10,
+                'break_time_duration' => 60,
             ],
             [
                 'name' => 'Middle Shift',
@@ -42,6 +50,11 @@ class BilcodeOrganizationSeeder extends Seeder
                 'end_time' => '20:00',
                 'late_tolerance' => 15,
                 'is_night_shift' => false,
+                'grace_period_check_in' => 10,
+                'grace_period_check_out' => 5,
+                'minimum_work_hours' => 8,
+                'maximum_work_hours' => 10,
+                'break_time_duration' => 60,
             ],
             [
                 'name' => 'Night Shift',
@@ -49,6 +62,11 @@ class BilcodeOrganizationSeeder extends Seeder
                 'end_time' => '06:00',
                 'late_tolerance' => 15,
                 'is_night_shift' => true,
+                'grace_period_check_in' => 10,
+                'grace_period_check_out' => 5,
+                'minimum_work_hours' => 8,
+                'maximum_work_hours' => 10,
+                'break_time_duration' => 60,
             ],
         ];
 
@@ -78,16 +96,22 @@ class BilcodeOrganizationSeeder extends Seeder
                 [
                     'description' => $d['description'],
                     'shift_id' => $createdShifts[0]->id, // Default to Regular Shift
+                    'manager_id' => $owner ? $owner->id : null,
                 ]
             );
         }
 
         $this->command->info('✅ Bilcode Departments created.');
 
-        // 4. Buat Karyawan Sampel dari List Nama yang Diminta
+        // 5. Ambil Sites untuk lokasi default
+        $sites = $company->sites;
+        $headOffice = $sites->where('is_wfh', false)->first();
+
+        // 6. Buat Karyawan Sampel dari List Nama yang Diminta
         $password = Hash::make('password123');
         $today = now();
         $requestedNames = ['Abil', 'Eka', 'Badar', 'Ayip', 'Gilbram', 'Hasim', 'Naji', 'Iqbal', 'Dwicky', 'Fattah'];
+        $employmentTypes = ['Permanent', 'Contract', 'Internship', 'Probation'];
 
         foreach ($requestedNames as $index => $name) {
             $dept = $createdDepartments[$index % count($createdDepartments)];
@@ -102,11 +126,16 @@ class BilcodeOrganizationSeeder extends Seeder
                     'role' => 'EMPLOYEE',
                     'company_id' => $company->id,
                     'department_id' => $dept->id,
+                    'site_id' => $headOffice ? $headOffice->id : null,
                     'shift_id' => $dept->shift_id,
+                    'direct_manager_id' => $owner ? $owner->id : null,
                     'employee_id' => User::generateEmployeeId($company->id),
-                    'join_date' => $today->subMonths(rand(1, 12)),
+                    'join_date' => $today->copy()->subMonths(rand(1, 12)),
                     'status' => true,
                     'position' => ($index === 0) ? 'Senior Officer' : 'Staff',
+                    'employment_type' => $employmentTypes[$index % count($employmentTypes)],
+                    'emergency_contact_name' => 'Emergency Contact for '.$name,
+                    'emergency_contact_phone' => '0899'.rand(10000000, 99999999),
                 ]
             );
 

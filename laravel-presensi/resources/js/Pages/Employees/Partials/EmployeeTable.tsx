@@ -1,4 +1,4 @@
-import { router } from "@inertiajs/react";
+import { router, Link } from "@inertiajs/react";
 import {
     MoreHorizontal,
     Eye,
@@ -58,15 +58,15 @@ export default function EmployeeTable({
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Detail</TableHead>
+                            <TableHead className="min-w-[200px]">Detail</TableHead>
                             <TableHead className="hidden md:table-cell">
                                 ID & Jabatan
                             </TableHead>
                             <TableHead className="hidden lg:table-cell">
                                 Organisasi
                             </TableHead>
-                            <TableHead>Wajah</TableHead>
-                            <TableHead>Status</TableHead>
+                            <TableHead className="hidden sm:table-cell">Wajah</TableHead>
+                            <TableHead className="hidden xs:table-cell">Status</TableHead>
                             <TableHead className="text-right">Opsi</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -88,9 +88,12 @@ export default function EmployeeTable({
                                                 )}
                                             </Avatar>
                                             <div className="space-y-1">
-                                                <div className="text-sm font-medium">
+                                                <Link
+                                                    href={route("employees.show", user.id)}
+                                                    className="text-sm font-medium hover:text-primary transition-colors"
+                                                >
                                                     {user.full_name}
-                                                </div>
+                                                </Link>
                                                 <div className="text-xs text-muted-foreground">
                                                     {user.personal_email}
                                                 </div>
@@ -121,27 +124,27 @@ export default function EmployeeTable({
                                         </div>
                                     </TableCell>
 
-                                    <TableCell>
+                                    <TableCell className="hidden sm:table-cell">
                                         <div className="flex flex-col gap-1.5 items-start">
                                             {user.face_biometric_count &&
                                             user.face_biometric_count > 0 ? (
                                                 <div className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
                                                     <Fingerprint className="h-3.5 w-3.5" />
-                                                    <span>Valid</span>
+                                                    <span className="hidden md:inline">Valid</span>
                                                     {user.face_biometric
                                                         ?.requires_re_registration && (
                                                         <Badge
                                                             variant="outline"
                                                             className="bg-orange-50 text-orange-600 border-orange-200 text-[9px] h-4 px-1 leading-none uppercase font-medium"
                                                         >
-                                                            Wajib Update
+                                                            Update
                                                         </Badge>
                                                     )}
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
                                                     <Fingerprint className="h-3.5 w-3.5 opacity-40" />
-                                                    <span>Belum Terdaftar</span>
+                                                    <span className="hidden md:inline">Belum</span>
                                                 </div>
                                             )}
 
@@ -160,13 +163,13 @@ export default function EmployeeTable({
                                             >
                                                 {user.face_biometric
                                                     ?.requires_re_registration
-                                                    ? "Daftar Ulang"
-                                                    : "Kirim Link Daftar"}
+                                                    ? "Ulang"
+                                                    : "Daftar"}
                                             </Button>
                                         </div>
                                     </TableCell>
 
-                                    <TableCell>
+                                    <TableCell className="hidden xs:table-cell">
                                         {getStatusBadge(user.status)}
                                     </TableCell>
 
@@ -181,11 +184,11 @@ export default function EmployeeTable({
                                                 <DropdownMenuLabel>
                                                     Opsi
                                                 </DropdownMenuLabel>
-                                                <DropdownMenuItem
-                                                    onClick={() => onViewClick(user)}
-                                                >
-                                                    <Eye className="mr-2 h-4 w-4" />
-                                                    Lihat Detail
+                                                <DropdownMenuItem asChild>
+                                                    <Link href={route("employees.show", user.id)}>
+                                                        <Eye className="mr-2 h-4 w-4" />
+                                                        Lihat Detail
+                                                    </Link>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     onClick={() => onEditClick(user)}
