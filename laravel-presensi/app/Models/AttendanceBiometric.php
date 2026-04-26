@@ -38,6 +38,7 @@ class AttendanceBiometric extends Model
         'depth_map_score',
         'frame_count_analyzed',
         'attack_type',
+        'evidence_path',
     ];
 
     protected $casts = [

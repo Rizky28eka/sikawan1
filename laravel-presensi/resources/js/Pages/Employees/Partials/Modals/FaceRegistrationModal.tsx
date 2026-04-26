@@ -38,25 +38,26 @@ export default function FaceRegistrationModal({
         setIsGeneratingLink(true);
         try {
             const response = await fetch(
-                route("employees.face-registration-link", user.id),
+                route("employees.generate-face-invite"),
                 {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": (
-                            document.querySelector(
-                                'meta[name="csrf-token"]',
-                            ) as any
-                        ).content,
+                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "",
                     },
+                    body: JSON.stringify({ user_id: user.id }),
                 },
             );
             const res = await response.json();
-            if (res.link) {
+            if (response.ok && res.link) {
                 setFaceInviteLink(res.link);
                 toast.success("Link pendaftaran wajah berhasil dibuat!");
+            } else {
+                console.error("Server error response:", res);
+                toast.error(res.message || "Gagal membuat link pendaftaran.");
             }
         } catch (error) {
+            console.error("Error generating face registration link:", error);
             toast.error("Gagal membuat link pendaftaran.");
         } finally {
             setIsGeneratingLink(false);

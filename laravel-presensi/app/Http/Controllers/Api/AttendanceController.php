@@ -163,8 +163,8 @@ class AttendanceController extends Controller
         ]);
 
         // 5. Save Telemetry (with NaN Protection)
-        $this->saveTelemetryData($attendance, $data, $aiResult);
-        $this->saveEvidenceImage($data, $user);
+        $evidencePath = $this->saveEvidenceImage($data, $user);
+        $this->saveTelemetryData($attendance, $data, $aiResult, $evidencePath);
 
         return response()->json([
             'success' => true,
@@ -222,7 +222,7 @@ class AttendanceController extends Controller
     /**
      * Helper to save comprehensive telemetry data (Robust V4 Logic)
      */
-    private function saveTelemetryData($attendance, AttendanceData $data, $aiResult)
+    private function saveTelemetryData($attendance, AttendanceData $data, $aiResult, ?string $evidencePath = null)
     {
         try {
             $conf = $this->sanitizeNumericalData($aiResult['confidence'] ?? 0);
@@ -240,6 +240,7 @@ class AttendanceController extends Controller
                 'lighting_score' => $lighting,
                 'spoof_flag' => $aiResult['spoof_flag'] ?? 'real',
                 'detected_face_count' => $aiResult['face_count'] ?? 1,
+                'evidence_path' => $evidencePath,
             ]);
 
             // Location Telemetry
@@ -289,7 +290,7 @@ class AttendanceController extends Controller
     /**
      * Helper untuk menyimpan gambar sebagai arsip presensi
      */
-    private function saveEvidenceImage(AttendanceData $data, $user)
+    private function saveEvidenceImage(AttendanceData $data, $user): ?string
     {
         try {
             $folderName = preg_replace('/[^\w\-]/', '', $user->employee_id).'_'.now()->format('Ymd');
@@ -297,17 +298,22 @@ class AttendanceController extends Controller
 
             $base64String = $data->image_base64 ?? ($data->images_base64[0] ?? null);
             if (! $base64String) {
-                return;
+                return null;
             }
 
             $imageData = explode(',', $base64String);
             $base64 = count($imageData) > 1 ? $imageData[1] : $imageData[0];
 
             $fileName = 'evidence_'.time().'.jpg';
-            Storage::disk('public')->put($subFolder.'/'.$fileName, base64_decode($base64));
+            $fullPath = $subFolder.'/'.$fileName;
+            Storage::disk('public')->put($fullPath, base64_decode($base64));
+
+            return $fullPath;
 
         } catch (\Exception $e) {
             Log::error('Failed to save evidence image: '.$e->getMessage());
+
+            return null;
         }
     }
 }

@@ -77,6 +77,7 @@ export interface AttendanceBiometric {
     liveness_score?: number;
     spoof_flag?: string;
     attack_type?: string;
+    evidence_path?: string;
 }
 
 export interface AttendanceNetwork {

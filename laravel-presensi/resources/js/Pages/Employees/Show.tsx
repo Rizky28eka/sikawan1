@@ -12,6 +12,8 @@ import {
     Fingerprint,
     Shield,
     Edit2,
+    Globe,
+    MapPin as MapPinIcon,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
 import { Badge } from "@/Components/ui/badge";
@@ -39,7 +41,16 @@ interface AttendanceRecord {
     status: string;
     is_late: boolean;
     confidence?: number;
+    latitude: number;
+    longitude: number;
     site?: { id: string; name: string };
+    biometric?: {
+        evidence_path: string;
+    };
+    network?: {
+        ip_address: string;
+        network_type: string;
+    };
 }
 
 interface Props {
@@ -249,6 +260,12 @@ export default function EmployeeShow({
                                             <TableHead className="text-[10px] uppercase">
                                                 Status
                                             </TableHead>
+                                            <TableHead className="text-[10px] uppercase">
+                                                Informasi
+                                            </TableHead>
+                                            <TableHead className="text-[10px] uppercase">
+                                                Keamanan AI
+                                            </TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -258,16 +275,25 @@ export default function EmployeeShow({
                                                 .map((item) => (
                                                     <TableRow key={item.id}>
                                                         <TableCell className="py-3">
-                                                            <p className="text-sm font-medium">
-                                                                {formatTime(
-                                                                    item.timestamp,
-                                                                )}
-                                                            </p>
-                                                            <p className="text-[10px] text-muted-foreground">
-                                                                {formatDate(
-                                                                    item.timestamp,
-                                                                )}
-                                                            </p>
+                                                            <div className="flex items-center gap-3">
+                                                                <Avatar className="h-10 w-10 rounded-lg border border-muted/50 shadow-sm overflow-hidden">
+                                                                    <AvatarImage
+                                                                        src={`/storage/${item.biometric?.evidence_path}`}
+                                                                        className="object-cover"
+                                                                    />
+                                                                    <AvatarFallback className="rounded-lg bg-muted text-muted-foreground">
+                                                                        <UserIcon className="h-4 w-4" />
+                                                                    </AvatarFallback>
+                                                                </Avatar>
+                                                                <div className="space-y-0.5">
+                                                                    <p className="text-sm font-medium">
+                                                                        {formatTime(item.timestamp)}
+                                                                    </p>
+                                                                    <p className="text-[10px] text-muted-foreground">
+                                                                        {formatDate(item.timestamp)}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
                                                         </TableCell>
                                                         <TableCell className="text-center">
                                                             <Badge
@@ -294,12 +320,47 @@ export default function EmployeeShow({
                                                                 </span>
                                                             )}
                                                         </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex flex-col gap-0.5">
+                                                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                                                    <MapPinIcon className="h-3 w-3" />
+                                                                    {item.latitude?.toFixed(4)}, {item.longitude?.toFixed(4)}
+                                                                </div>
+                                                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                                                    <Globe className="h-3 w-3" />
+                                                                    {item.network?.ip_address || "No IP"}
+                                                                </div>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="h-1.5 w-12 overflow-hidden rounded-full bg-muted">
+                                                                    <div
+                                                                        className={cn(
+                                                                            "h-full rounded-full transition-all",
+                                                                            (item.confidence ?? 0) > 0.85 || (item.confidence ?? 0) > 85
+                                                                                ? "bg-emerald-500"
+                                                                                : "bg-amber-500",
+                                                                        )}
+                                                                        style={{
+                                                                            width: `${(item.confidence ?? 0) > 1 ? (item.confidence ?? 0) : (item.confidence ?? 0) * 100}%`,
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                                <span className="text-[10px] text-muted-foreground font-medium">
+                                                                    {(item.confidence ?? 0) > 1
+                                                                        ? Math.round(item.confidence ?? 0)
+                                                                        : Math.round((item.confidence ?? 0) * 100)}
+                                                                    %
+                                                                </span>
+                                                            </div>
+                                                        </TableCell>
                                                     </TableRow>
                                                 ))
                                         ) : (
                                             <TableRow>
                                                 <TableCell
-                                                    colSpan={3}
+                                                    colSpan={5}
                                                     className="h-24 text-center text-xs text-muted-foreground"
                                                 >
                                                     Belum ada data presensi.

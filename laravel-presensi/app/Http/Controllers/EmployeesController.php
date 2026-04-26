@@ -94,12 +94,14 @@ class EmployeesController extends Controller
         return Inertia::render('Employees/Index', [
             'employees' => $employees,
             'filters' => $request->only(['search', 'department_id', 'role', 'status', 'site_id']),
-            'departments' => Department::where('company_id', $user->company_id)->get(),
-            'sites' => Site::where('company_id', $user->company_id)->get(),
-            'shifts' => Shift::where('company_id', $user->company_id)->get(),
-            'managers' => User::where('company_id', $user->company_id)
-                ->whereIn('role', ['MANAGER', 'OWNER'])
-                ->get(['id', 'full_name']),
+            'departments' => $role === 'SUPERADMIN' ? Department::all() : Department::where('company_id', $user->company_id)->get(),
+            'sites' => $role === 'SUPERADMIN' ? Site::all() : Site::where('company_id', $user->company_id)->get(),
+            'shifts' => $role === 'SUPERADMIN' ? Shift::all() : Shift::where('company_id', $user->company_id)->get(),
+            'managers' => $role === 'SUPERADMIN'
+                ? User::whereIn('role', ['MANAGER', 'OWNER'])->get(['id', 'full_name'])
+                : User::where('company_id', $user->company_id)
+                    ->whereIn('role', ['MANAGER', 'OWNER'])
+                    ->get(['id', 'full_name']),
             'invitations' => $invitations,
             'auth_user' => $user,
         ]);
@@ -139,12 +141,14 @@ class EmployeesController extends Controller
             'employee' => $employee,
             'attendances' => $attendances,
             'auth_user' => $user,
-            'departments' => Department::where('company_id', $user->company_id)->get(),
-            'sites' => Site::where('company_id', $user->company_id)->get(),
-            'shifts' => Shift::where('company_id', $user->company_id)->get(),
-            'managers' => User::where('company_id', $user->company_id)
-                ->whereIn('role', ['MANAGER', 'OWNER'])
-                ->get(['id', 'full_name']),
+            'departments' => $user->role === 'SUPERADMIN' ? Department::all() : Department::where('company_id', $user->company_id)->get(),
+            'sites' => $user->role === 'SUPERADMIN' ? Site::all() : Site::where('company_id', $user->company_id)->get(),
+            'shifts' => $user->role === 'SUPERADMIN' ? Shift::all() : Shift::where('company_id', $user->company_id)->get(),
+            'managers' => $user->role === 'SUPERADMIN'
+                ? User::whereIn('role', ['MANAGER', 'OWNER'])->get(['id', 'full_name'])
+                : User::where('company_id', $user->company_id)
+                    ->whereIn('role', ['MANAGER', 'OWNER'])
+                    ->get(['id', 'full_name']),
         ]);
     }
 
@@ -219,7 +223,7 @@ class EmployeesController extends Controller
         return back()->with('success', 'Undangan berhasil dibuat.');
     }
 
-    public function generateFaceInvite(Request $request): RedirectResponse
+    public function generateFaceInvite(Request $request): \Illuminate\Http\JsonResponse
     {
         $request->validate([
             'user_id' => 'required|exists:users,id',
@@ -229,7 +233,7 @@ class EmployeesController extends Controller
 
         // RBAC Check
         if (Auth::user()->role === 'MANAGER' && $user->department_id != Auth::user()->department_id) {
-            return back()->withErrors(['error' => 'Unauthorized']);
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $invitation = UserInvitation::updateOrCreate(
@@ -260,7 +264,11 @@ class EmployeesController extends Controller
             'user_agent' => $request->userAgent(),
         ]);
 
-        return back()->with('success', 'Link registrasi wajah berhasil dibuat.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Link registrasi wajah berhasil dibuat.',
+            'link' => route('invitation.accept', $invitation->token),
+        ]);
     }
 
     public function destroy(string $id): RedirectResponse

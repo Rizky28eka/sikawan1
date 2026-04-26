@@ -38,6 +38,7 @@ import {
     Check,
     X,
     Network,
+    Globe,
 } from "lucide-react";
 import { Label } from "@/Components/ui/label";
 import { cn } from "@/lib/utils";
@@ -65,7 +66,7 @@ interface AttendanceRecord {
     attendance_category: string;
     actual_duration?: number;
     location?: AttendanceLocation;
-    biometric?: AttendanceBiometric;
+    biometric?: AttendanceBiometric & { evidence_path?: string };
     network?: AttendanceNetwork;
     site?: { id: string; name: string };
     user: {
@@ -206,6 +207,9 @@ export default function AttendanceIndex({ attendances, role }: Props) {
                                     <TableHead className="h-12 text-[10px] uppercase tracking-widest text-muted-foreground">
                                         Status
                                     </TableHead>
+                                    <TableHead className="h-12 text-[10px] uppercase tracking-widest text-muted-foreground">
+                                        Informasi
+                                    </TableHead>
                                     <TableHead className="hidden h-12 text-[10px] uppercase tracking-widest text-muted-foreground lg:table-cell">
                                         Keamanan AI
                                     </TableHead>
@@ -315,6 +319,18 @@ export default function AttendanceIndex({ attendances, role }: Props) {
                                                     item.is_late,
                                                 )}
                                             </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col gap-0.5">
+                                                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
+                                                        <MapPin className="h-3 w-3 text-primary/60" />
+                                                        {item.latitude?.toFixed(4)}, {item.longitude?.toFixed(4)}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-light">
+                                                        <Globe className="h-3 w-3 text-primary/60" />
+                                                        {item.network?.ip_address || "-"}
+                                                    </div>
+                                                </div>
+                                            </TableCell>
                                             <TableCell className="hidden lg:table-cell">
                                                 <div className="flex items-center gap-3">
                                                     <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
@@ -332,10 +348,9 @@ export default function AttendanceIndex({ attendances, role }: Props) {
                                                         />
                                                     </div>
                                                     <span className="text-[10px] text-muted-foreground tabular-nums font-medium">
-                                                        {Math.round(
-                                                            (item.confidence ||
-                                                                0) * 100,
-                                                        )}
+                                                        {(item.confidence ?? 0) > 1
+                                                            ? Math.round(item.confidence ?? 0)
+                                                            : Math.round((item.confidence ?? 0) * 100)}
                                                         %
                                                     </span>
                                                 </div>
@@ -359,7 +374,7 @@ export default function AttendanceIndex({ attendances, role }: Props) {
                                 ) : (
                                     <TableRow>
                                         <TableCell
-                                            colSpan={6}
+                                            colSpan={7}
                                             className="h-64 text-center"
                                         >
                                             <div className="flex flex-col items-center justify-center space-y-3">
@@ -492,6 +507,23 @@ export default function AttendanceIndex({ attendances, role }: Props) {
                                 </div>
                             </div>
 
+                            {/* Evidence Image */}
+                            {selectedAttendance.biometric?.evidence_path && (
+                                <div className="relative h-64 w-full overflow-hidden bg-muted">
+                                    <img
+                                        src={`/storage/${selectedAttendance.biometric.evidence_path}`}
+                                        alt="Attendance Evidence"
+                                        className="h-full w-full object-cover"
+                                    />
+                                    <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-background to-transparent" />
+                                    <div className="absolute bottom-4 left-6">
+                                        <Badge variant="secondary" className="bg-black/50 text-white backdrop-blur-sm border-none text-[10px] uppercase tracking-widest">
+                                            Captured Live
+                                        </Badge>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Details Information */}
                             <div className="space-y-8 bg-background p-8">
                                 <div className="grid grid-cols-2 gap-4">
@@ -545,10 +577,9 @@ export default function AttendanceIndex({ attendances, role }: Props) {
                                                     </p>
                                                     <p className="text-[10px] text-muted-foreground font-light">
                                                         Score:{" "}
-                                                        {Math.round(
-                                                            (selectedAttendance.confidence ||
-                                                                0) * 100,
-                                                        )}
+                                                        {(selectedAttendance.confidence ?? 0) > 1
+                                                            ? Math.round(selectedAttendance.confidence ?? 0)
+                                                            : Math.round((selectedAttendance.confidence ?? 0) * 100)}
                                                         % Match
                                                     </p>
                                                 </div>
