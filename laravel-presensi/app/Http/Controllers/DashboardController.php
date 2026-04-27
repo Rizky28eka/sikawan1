@@ -60,7 +60,8 @@ class DashboardController extends Controller
 
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::today()->subDays($i);
-            $query = Attendance::whereDate('timestamp', $date);
+            $query = Attendance::whereDate('timestamp', $date)
+                ->whereIn('type', ['IN', 'CLOCK_IN']);
 
             if ($user->role === 'OWNER') {
                 $query->where('company_id', $companyId);
@@ -95,9 +96,11 @@ class DashboardController extends Controller
         $totalEmployees = User::where('company_id', $companyId)->count();
         $todayAttendance = Attendance::where('company_id', $companyId)
             ->whereDate('timestamp', $today)
+            ->whereIn('type', ['IN', 'CLOCK_IN'])
             ->count();
         $todayLate = Attendance::where('company_id', $companyId)
             ->whereDate('timestamp', $today)
+            ->whereIn('type', ['IN', 'CLOCK_IN'])
             ->where('is_late', true)
             ->count();
 
@@ -118,8 +121,8 @@ class DashboardController extends Controller
         $today = Carbon::today();
 
         return [
-            'present_today' => Attendance::where('type', 'IN')->whereDate('timestamp', $today)->count(),
-            'late_today' => Attendance::where('type', 'IN')->whereDate('timestamp', $today)->where('is_late', true)->count(),
+            'present_today' => Attendance::whereIn('type', ['IN', 'CLOCK_IN'])->whereDate('timestamp', $today)->count(),
+            'late_today' => Attendance::whereIn('type', ['IN', 'CLOCK_IN'])->whereDate('timestamp', $today)->where('is_late', true)->count(),
             'leave_today' => Leave::where('status', 'approved')->whereDate('start_date', '<=', $today)->whereDate('end_date', '>=', $today)->count(),
             'permission_today' => PermissionRequest::where('status', 'approved')->whereDate('start_time', '>=', $today->startOfDay())->whereDate('start_time', '<=', $today->endOfDay())->count(),
             'pending_leave' => Leave::where('status', 'pending')->count(),
@@ -133,8 +136,8 @@ class DashboardController extends Controller
         $today = Carbon::today();
 
         return [
-            'present_today' => Attendance::where('company_id', $companyId)->where('type', 'IN')->whereDate('timestamp', $today)->count(),
-            'late_today' => Attendance::where('company_id', $companyId)->where('type', 'IN')->whereDate('timestamp', $today)->where('is_late', true)->count(),
+            'present_today' => Attendance::where('company_id', $companyId)->whereIn('type', ['IN', 'CLOCK_IN'])->whereDate('timestamp', $today)->count(),
+            'late_today' => Attendance::where('company_id', $companyId)->whereIn('type', ['IN', 'CLOCK_IN'])->whereDate('timestamp', $today)->where('is_late', true)->count(),
             'leave_today' => Leave::where('company_id', $companyId)->where('status', 'approved')->whereDate('start_date', '<=', $today)->whereDate('end_date', '>=', $today)->count(),
             'permission_today' => PermissionRequest::where('company_id', $companyId)->where('status', 'approved')->whereDate('start_time', '<=', $today->endOfDay())->whereDate('start_time', '>=', $today->startOfDay())->count(),
             'pending_leave' => Leave::where('company_id', $companyId)->where('status', 'pending')->count(),
@@ -147,8 +150,8 @@ class DashboardController extends Controller
     {
         $today = Carbon::today();
         $teamCount = User::where('department_id', $user->department_id)->count();
-        $presentToday = Attendance::whereHas('user', fn ($q) => $q->where('department_id', $user->department_id))->whereDate('timestamp', $today)->count();
-        $lateToday = Attendance::whereHas('user', fn ($q) => $q->where('department_id', $user->department_id))->whereDate('timestamp', $today)->where('is_late', true)->count();
+        $presentToday = Attendance::whereHas('user', fn ($q) => $q->where('department_id', $user->department_id))->whereIn('type', ['IN', 'CLOCK_IN'])->whereDate('timestamp', $today)->count();
+        $lateToday = Attendance::whereHas('user', fn ($q) => $q->where('department_id', $user->department_id))->whereIn('type', ['IN', 'CLOCK_IN'])->whereDate('timestamp', $today)->where('is_late', true)->count();
         $pending = Leave::whereHas('user', fn ($q) => $q->where('department_id', $user->department_id))->where('status', 'pending')->count();
 
         return [
@@ -165,8 +168,8 @@ class DashboardController extends Controller
         $deptId = $user->department_id;
 
         return [
-            'present_today' => Attendance::whereHas('user', fn ($q) => $q->where('department_id', $deptId))->where('type', 'IN')->whereDate('timestamp', $today)->count(),
-            'late_today' => Attendance::whereHas('user', fn ($q) => $q->where('department_id', $deptId))->where('type', 'IN')->whereDate('timestamp', $today)->where('is_late', true)->count(),
+            'present_today' => Attendance::whereHas('user', fn ($q) => $q->where('department_id', $deptId))->whereIn('type', ['IN', 'CLOCK_IN'])->whereDate('timestamp', $today)->count(),
+            'late_today' => Attendance::whereHas('user', fn ($q) => $q->where('department_id', $deptId))->whereIn('type', ['IN', 'CLOCK_IN'])->whereDate('timestamp', $today)->where('is_late', true)->count(),
             'leave_today' => Leave::whereHas('user', fn ($q) => $q->where('department_id', $deptId))->where('status', 'approved')->whereDate('start_date', '<=', $today)->whereDate('end_date', '>=', $today)->count(),
             'permission_today' => PermissionRequest::where('company_id', $user->company_id)->where('status', 'approved')->whereHas('user', fn ($q) => $q->where('department_id', $deptId))->whereDate('start_time', '>=', $today->startOfDay())->whereDate('start_time', '<=', $today->endOfDay())->count(),
             'pending_leave' => Leave::whereHas('user', fn ($q) => $q->where('department_id', $deptId))->where('status', 'pending')->count(),
