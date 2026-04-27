@@ -66,7 +66,7 @@ async def startup_event():
     print("🚀 SMART ATTENDANCE AI SERVICE STARTED")
     print(f"🤖 Model     : Haar Cascade + KNN (V3.0.0)")
     print(f"👥 Classes   : {len(classes)} Users")
-    print(f"📊 Samples   : {metrics.get('train_samples', 0) + metrics.get('test_samples', 0) if metrics else 'N/A'} images")
+    print(f"📊 Samples   : {metrics.get('total_samples', 'N/A') if metrics else 'N/A'} images")
     print(f"📈 Accuracy  : {accuracy}")
     
     if metrics:
