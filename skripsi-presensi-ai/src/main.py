@@ -48,13 +48,35 @@ async def startup_event():
     import joblib
     from src.core.config import settings
     
+    metrics_path = os.path.join(settings.model_dir, "metrics.joblib")
     acc_path = os.path.join(settings.model_dir, "accuracy.joblib")
-    accuracy = joblib.load(acc_path) if os.path.exists(acc_path) else "0% (Belum dilatih)"
+    metadata_path = os.path.join(settings.model_dir, "metadata.joblib")
+    
+    # Load Basic Info
+    classes = joblib.load(metadata_path) if os.path.exists(metadata_path) else []
+    metrics = joblib.load(metrics_path) if os.path.exists(metrics_path) else None
+    
+    accuracy = "0% (Belum dilatih)"
+    if metrics:
+        accuracy = metrics.get("accuracy", "0%")
+    elif os.path.exists(acc_path):
+        accuracy = joblib.load(acc_path)
     
     print("\n" + "="*50)
     print("🚀 SMART ATTENDANCE AI SERVICE STARTED")
-    print(f"🤖 Model  : Haar Cascade + KNN (V3.0.0)")
-    print(f"📈 Accuracy: {accuracy}")
+    print(f"🤖 Model     : Haar Cascade + KNN (V3.0.0)")
+    print(f"👥 Classes   : {len(classes)} Users")
+    print(f"📊 Samples   : {metrics.get('train_samples', 0) + metrics.get('test_samples', 0) if metrics else 'N/A'} images")
+    print(f"📈 Accuracy  : {accuracy}")
+    
+    if metrics:
+        print(f"🎯 Precision : {metrics.get('precision', 'N/A')}")
+        print(f"🔄 Recall    : {metrics.get('recall', 'N/A')}")
+        print(f"🏆 F1-Score  : {metrics.get('f1_score', 'N/A')}")
+        print(f"🔢 K-Value   : {metrics.get('k_value', 'N/A')}")
+    else:
+        print("💡 Tip: Jalankan 'Retrain Model' untuk melihat metrik detail.")
+        
     print("="*50 + "\n")
 
 if __name__ == "__main__":

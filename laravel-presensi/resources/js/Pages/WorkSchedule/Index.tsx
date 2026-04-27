@@ -1,3 +1,4 @@
+import axios from "axios";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, router, useForm } from "@inertiajs/react";
 import { useState, useEffect } from "react";
@@ -191,11 +192,10 @@ export default function Index({
         setIsMembersOpen(true);
         setLoadingMembers(true);
         try {
-            const response = await fetch(
+            const response = await axios.get(
                 route("work-schedule.shifts.members", shift.id),
             );
-            const resData = await response.json();
-            setMembers(resData);
+            setMembers(response.data);
         } catch (error) {
             toast.error("Gagal memuat anggota shift.");
         } finally {

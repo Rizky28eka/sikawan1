@@ -129,13 +129,19 @@ async def train(background_tasks: BackgroundTasks):
 @router.get("/status")
 async def status():
     """Status Engine AI & Laporan Akurasi Skripsi."""
+    metrics_path = os.path.join(settings.model_dir, "metrics.joblib")
     acc_path = os.path.join(settings.model_dir, "accuracy.joblib")
-    accuracy = joblib.load(acc_path) if os.path.exists(acc_path) else "0% (Belum dilatih)"
+    
+    metrics = {}
+    if os.path.exists(metrics_path):
+        metrics = joblib.load(metrics_path)
+    elif os.path.exists(acc_path):
+        metrics = {"accuracy": joblib.load(acc_path)}
     
     return {
         "engine": "Haar Cascade + KNN (Skripsi Compliance)",
         "detector_loaded": recognition_svc.detector.face_cascade is not None,
         "model_loaded": recognition_svc.knn is not None,
         "class_count": len(recognition_svc.class_names),
-        "model_accuracy": accuracy
+        "metrics": metrics if metrics else "Belum dilatih"
     }

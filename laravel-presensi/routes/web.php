@@ -87,7 +87,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/holidays', [HolidaysController::class, 'store'])->name('holidays.store');
     Route::put('/holidays/{id}', [HolidaysController::class, 'update'])->name('holidays.update');
     Route::delete('/holidays/{id}', [HolidaysController::class, 'destroy'])->name('holidays.destroy');
-
+ 
     // Work Schedules (Unified: Shifts & Employee Schedules)
     Route::get('/work-schedule', [WorkScheduleController::class, 'index'])->name('work-schedule');
     Route::get('/owner/work-schedule', [WorkScheduleController::class, 'index'])->name('owner.work-schedule');

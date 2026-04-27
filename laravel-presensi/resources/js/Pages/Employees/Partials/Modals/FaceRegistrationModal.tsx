@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useState, useEffect } from "react";
 import { Copy, Info, Loader2, Plus } from "lucide-react";
 import {
@@ -37,28 +38,22 @@ export default function FaceRegistrationModal({
         if (!user) return;
         setIsGeneratingLink(true);
         try {
-            const response = await fetch(
+            const response = await axios.post(
                 route("employees.generate-face-invite"),
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || "",
-                    },
-                    body: JSON.stringify({ user_id: user.id }),
-                },
+                { user_id: user.id }
             );
-            const res = await response.json();
-            if (response.ok && res.link) {
-                setFaceInviteLink(res.link);
+
+            if (response.data.success && response.data.link) {
+                setFaceInviteLink(response.data.link);
                 toast.success("Link pendaftaran wajah berhasil dibuat!");
             } else {
-                console.error("Server error response:", res);
-                toast.error(res.message || "Gagal membuat link pendaftaran.");
+                console.error("Server error response:", response.data);
+                toast.error(response.data.message || "Gagal membuat link pendaftaran.");
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error generating face registration link:", error);
-            toast.error("Gagal membuat link pendaftaran.");
+            const errorMessage = error.response?.data?.message || "Gagal membuat link pendaftaran.";
+            toast.error(errorMessage);
         } finally {
             setIsGeneratingLink(false);
         }
