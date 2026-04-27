@@ -22,7 +22,7 @@ import {
     SelectValue,
 } from "@/Components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
-import { Dialog, DialogContent } from "@/Components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/Components/ui/dialog";
 import {
     Search,
     Filter,
@@ -452,6 +452,12 @@ export default function AttendanceIndex({ attendances, role }: Props) {
                 onOpenChange={(o) => !o && setSelectedAttendance(null)}
             >
                 <DialogContent className="max-w-[480px] overflow-hidden border-none p-0 shadow-3xl">
+                    <DialogHeader className="sr-only">
+                        <DialogTitle>Detail Presensi</DialogTitle>
+                        <DialogDescription>
+                            Informasi lengkap mengenai log presensi karyawan.
+                        </DialogDescription>
+                    </DialogHeader>
                     {selectedAttendance && (
                         <div className="flex flex-col">
                             {/* Header Gradient */}

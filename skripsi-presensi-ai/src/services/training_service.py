@@ -104,7 +104,8 @@ class TrainingService:
                 "recall": float(rec),
                 "f1_score": float(f1),
                 "test_samples": len(X_test),
-                "train_samples": len(X_train)
+                "train_samples": len(X_train),
+                "total_samples": len(X)
             })
         except Exception as e:
             logger.warning(f"Gagal hitung akurasi (user maybe has too few samples): {e}")
@@ -113,7 +114,8 @@ class TrainingService:
                 "accuracy_percent": "100% (Base)",
                 "precision": 1.0,
                 "recall": 1.0,
-                "f1_score": 1.0
+                "f1_score": 1.0,
+                "total_samples": len(X)
             })
             
         results["skipped_samples"] = skipped
@@ -140,7 +142,7 @@ class TrainingService:
             "recall": f"{results.get('recall', 0) * 100:.2f}%",
             "f1_score": f"{results.get('f1_score', 0) * 100:.2f}%",
             "k_value": results.get("k_value", "N/A"),
-            "total_samples": results.get("train_samples", 0) + results.get("test_samples", 0)
+            "total_samples": results.get("total_samples") or results.get("n_samples", 0)
         }
         joblib.dump(metrics, metadata_path)
         
