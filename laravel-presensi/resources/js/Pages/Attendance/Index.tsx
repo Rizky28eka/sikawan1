@@ -1,6 +1,6 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, router } from "@inertiajs/react";
-import { useState, useEffect } from "react";
+import { Head, router, Link } from "@inertiajs/react";
+import { useEffect } from "react";
 import { PageProps } from "@/types";
 import {
     Table,
@@ -11,36 +11,19 @@ import {
     TableRow,
 } from "@/Components/ui/table";
 import { Button } from "@/Components/ui/button";
-import { Input } from "@/Components/ui/input";
 import { Badge } from "@/Components/ui/badge";
-import { Card, CardContent } from "@/Components/ui/card";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/Components/ui/select";
+import { Card } from "@/Components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/Components/ui/dialog";
 import {
     Search,
-    Filter,
     MapPin,
     Clock,
-    Smartphone,
     AlertCircle,
-    RotateCcw,
-    CheckCircle2,
-    Download,
-    Fingerprint,
     Info,
     Check,
-    X,
     Network,
     Globe,
 } from "lucide-react";
-import { Label } from "@/Components/ui/label";
 import { cn } from "@/lib/utils";
 
 import {
@@ -92,9 +75,6 @@ interface Props extends PageProps {
 }
 
 export default function AttendanceIndex({ attendances, role }: Props) {
-    const [selectedAttendance, setSelectedAttendance] =
-        useState<AttendanceRecord | null>(null);
-
     // Real-time polling logic
     useEffect(() => {
         const interval = setInterval(() => {
@@ -207,12 +187,6 @@ export default function AttendanceIndex({ attendances, role }: Props) {
                                     <TableHead className="h-12 text-[10px] uppercase tracking-widest text-muted-foreground">
                                         Status
                                     </TableHead>
-                                    <TableHead className="h-12 text-[10px] uppercase tracking-widest text-muted-foreground">
-                                        Informasi
-                                    </TableHead>
-                                    <TableHead className="hidden h-12 text-[10px] uppercase tracking-widest text-muted-foreground lg:table-cell">
-                                        Keamanan AI
-                                    </TableHead>
                                     <TableHead className="h-12 pr-6 text-right text-[10px] uppercase tracking-widest text-muted-foreground">
                                         Info
                                     </TableHead>
@@ -305,7 +279,7 @@ export default function AttendanceIndex({ attendances, role }: Props) {
                                                 <div
                                                     className={cn(
                                                         "inline-flex h-8 w-8 items-center justify-center rounded-lg text-[10px] font-medium",
-                                                        item.type === "IN"
+                                                        ["IN", "CLOCK_IN"].includes(item.type?.toUpperCase() || "")
                                                             ? "bg-blue-50 text-blue-600"
                                                             : "bg-orange-50 text-orange-600",
                                                     )}
@@ -319,55 +293,21 @@ export default function AttendanceIndex({ attendances, role }: Props) {
                                                     item.is_late,
                                                 )}
                                             </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col gap-0.5">
-                                                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
-                                                        <MapPin className="h-3 w-3 text-primary/60" />
-                                                        {item.latitude?.toFixed(4)}, {item.longitude?.toFixed(4)}
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-light">
-                                                        <Globe className="h-3 w-3 text-primary/60" />
-                                                        {item.network?.ip_address || "-"}
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="hidden lg:table-cell">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
-                                                        <div
-                                                            className={cn(
-                                                                "h-full rounded-full transition-all",
-                                                                (item.confidence ||
-                                                                    0) > 0.85
-                                                                    ? "bg-emerald-500"
-                                                                    : "bg-amber-500",
-                                                            )}
-                                                            style={{
-                                                                width: `${(item.confidence || 0) * 100}%`,
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <span className="text-[10px] text-muted-foreground tabular-nums font-medium">
-                                                        {(item.confidence ?? 0) > 1
-                                                            ? Math.round(item.confidence ?? 0)
-                                                            : Math.round((item.confidence ?? 0) * 100)}
-                                                        %
-                                                    </span>
-                                                </div>
-                                            </TableCell>
                                             <TableCell className="pr-6 text-right">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-9 w-9 rounded-xl hover:bg-primary/5 hover:text-primary"
-                                                    onClick={() =>
-                                                        setSelectedAttendance(
-                                                            item,
-                                                        )
-                                                    }
+                                                <Link
+                                                    href={route(
+                                                        `${role.toLowerCase()}.attendance.show`,
+                                                        item.id,
+                                                    )}
                                                 >
-                                                    <Info className="h-4 w-4" />
-                                                </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-9 w-9 rounded-xl hover:bg-primary/5 hover:text-primary"
+                                                    >
+                                                        <Info className="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -445,227 +385,6 @@ export default function AttendanceIndex({ attendances, role }: Props) {
                     </div>
                 </Card>
             </div>
-
-            {/* ── DETAIL MODAL (Enhanced) ── */}
-            <Dialog
-                open={!!selectedAttendance}
-                onOpenChange={(o) => !o && setSelectedAttendance(null)}
-            >
-                <DialogContent className="max-w-[480px] overflow-hidden border-none p-0 shadow-3xl">
-                    <DialogHeader className="sr-only">
-                        <DialogTitle>Detail Presensi</DialogTitle>
-                        <DialogDescription>
-                            Informasi lengkap mengenai log presensi karyawan.
-                        </DialogDescription>
-                    </DialogHeader>
-                    {selectedAttendance && (
-                        <div className="flex flex-col">
-                            {/* Header Gradient */}
-                            <div
-                                className={cn(
-                                    "relative p-8 text-white",
-                                    selectedAttendance.type === "IN"
-                                        ? "bg-linear-to-br from-indigo-600 via-blue-600 to-cyan-500"
-                                        : "bg-linear-to-br from-orange-600 via-rose-600 to-rose-700",
-                                )}
-                            >
-                                <div className="absolute right-0 top-0 h-full w-32 bg-white/10 mask-[linear-gradient(to_left,white,transparent)]" />
-
-                                <div className="relative mb-6 flex items-start justify-between">
-                                    <Badge className="border-none bg-white/20 font-mono text-[9px] uppercase tracking-widest text-white backdrop-blur-md">
-                                        Log #{selectedAttendance.id.slice(0, 8)}
-                                    </Badge>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 rounded-full text-white hover:bg-white/10"
-                                        onClick={() =>
-                                            setSelectedAttendance(null)
-                                        }
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                </div>
-
-                                <div className="relative flex items-center gap-5">
-                                    <Avatar className="h-16 w-16 border-4 border-white/20 shadow-2xl">
-                                        <AvatarImage
-                                            src={
-                                                selectedAttendance.user
-                                                    .profile_photo
-                                            }
-                                        />
-                                        <AvatarFallback className="bg-white/20 text-xl text-white font-medium">
-                                            {selectedAttendance.user.full_name.charAt(
-                                                0,
-                                            )}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="space-y-1">
-                                        <h3 className="text-2xl leading-none tracking-tight font-medium">
-                                            {selectedAttendance.user.full_name}
-                                        </h3>
-                                        <p className="text-[11px] uppercase tracking-[0.2em] text-white/80 font-medium">
-                                            {selectedAttendance.user.department
-                                                ?.name || "Staff Umum"}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Evidence Image */}
-                            {selectedAttendance.biometric?.evidence_path && (
-                                <div className="relative h-64 w-full overflow-hidden bg-muted">
-                                    <img
-                                        src={`/storage/${selectedAttendance.biometric.evidence_path}`}
-                                        alt="Attendance Evidence"
-                                        className="h-full w-full object-cover"
-                                    />
-                                    <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-background to-transparent" />
-                                    <div className="absolute bottom-4 left-6">
-                                        <Badge variant="secondary" className="bg-black/50 text-white backdrop-blur-sm border-none text-[10px] uppercase tracking-widest">
-                                            Captured Live
-                                        </Badge>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Details Information */}
-                            <div className="space-y-8 bg-background p-8">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2 rounded-2xl bg-muted/30 p-4 transition-colors hover:bg-muted/50">
-                                        <div className="flex items-center gap-2 text-primary">
-                                            <Clock className="h-4 w-4" />
-                                            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
-                                                Waktu Log
-                                            </span>
-                                        </div>
-                                        <p className="text-lg tabular-nums font-medium">
-                                            {new Date(
-                                                selectedAttendance.timestamp,
-                                            ).toLocaleTimeString("id-ID", {
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                                second: "2-digit",
-                                            })}{" "}
-                                            WIB
-                                        </p>
-                                    </div>
-                                    <div className="space-y-2 rounded-2xl bg-muted/30 p-4 transition-colors hover:bg-muted/50">
-                                        <div className="flex items-center gap-2 text-primary">
-                                            <MapPin className="h-4 w-4" />
-                                            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
-                                                Lokasi Site
-                                            </span>
-                                        </div>
-                                        <p className="truncate text-lg font-medium">
-                                            {selectedAttendance.site?.name ||
-                                                "Area Site 01"}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Security Section */}
-                                <div className="space-y-4">
-                                    <h4 className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">
-                                        <Fingerprint className="h-3 w-3" />{" "}
-                                        Telemetri Keamanan
-                                    </h4>
-                                    <div className="space-y-3">
-                                        <div className="flex items-center justify-between rounded-xl border border-muted/50 p-3">
-                                            <div className="flex items-center gap-3">
-                                                <div className="rounded-lg bg-emerald-50 p-2 text-emerald-600">
-                                                    <CheckCircle2 className="h-4 w-4" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[11px] text-foreground font-medium">
-                                                        Verifikasi Wajah (AI)
-                                                    </p>
-                                                    <p className="text-[10px] text-muted-foreground font-light">
-                                                        Score:{" "}
-                                                        {(selectedAttendance.confidence ?? 0) > 1
-                                                            ? Math.round(selectedAttendance.confidence ?? 0)
-                                                            : Math.round((selectedAttendance.confidence ?? 0) * 100)}
-                                                        % Match
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 shadow-none border-none uppercase text-[9px] font-medium">
-                                                Valid
-                                            </Badge>
-                                        </div>
-                                        <div className="flex items-center justify-between rounded-xl border border-muted/50 p-3">
-                                            <div className="flex items-center gap-3">
-                                                <div className="rounded-lg bg-blue-50 p-2 text-blue-600">
-                                                    <Smartphone className="h-4 w-4" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[11px] text-foreground font-medium">
-                                                        Anti-Spoofing & Liveness
-                                                    </p>
-                                                    <p className="text-[10px] text-muted-foreground font-light">
-                                                        Human Detection Verified
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <Badge className="bg-blue-500/10 text-blue-700 hover:bg-blue-500/20 shadow-none border-none uppercase text-[9px] font-medium">
-                                                Secure
-                                            </Badge>
-                                        </div>
-                                        <div className="flex items-center justify-between rounded-xl border border-muted/50 p-3">
-                                            <div className="flex items-center gap-3">
-                                                <div className="rounded-lg bg-violet-50 p-2 text-violet-600">
-                                                    <Network className="h-4 w-4" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[11px] text-foreground font-medium">
-                                                        Integritas Jaringan
-                                                    </p>
-                                                    <p className="text-[10px] text-muted-foreground font-light">
-                                                        IP:{" "}
-                                                        {selectedAttendance
-                                                            .network
-                                                            ?.ip_address ||
-                                                            "192.168.1.xxx"}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <Badge className="bg-violet-500/10 text-violet-700 hover:bg-violet-500/20 shadow-none border-none uppercase text-[9px] font-medium">
-                                                Encrypted
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-3">
-                                    <Button
-                                        className="h-12 flex-1 shadow-xl shadow-primary/20 font-medium"
-                                        onClick={() =>
-                                            selectedAttendance.latitude &&
-                                            window.open(
-                                                `https://www.google.com/maps?q=${selectedAttendance.latitude},${selectedAttendance.longitude}`,
-                                                "_blank",
-                                            )
-                                        }
-                                    >
-                                        <MapPin className="mr-2 h-4 w-4" />{" "}
-                                        Lihat Titik Koordinat
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        className="h-12 border-none bg-muted/50 px-6 font-medium"
-                                        onClick={() =>
-                                            setSelectedAttendance(null)
-                                        }
-                                    >
-                                        Tutup
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
         </AuthenticatedLayout>
     );
 }

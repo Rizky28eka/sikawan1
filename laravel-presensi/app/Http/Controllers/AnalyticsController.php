@@ -42,7 +42,7 @@ class AnalyticsController extends Controller
         $employeeList = [];
 
         if ($tab === 'reports' || $tab === 'attendance' || $tab === 'employee') {
-            $reportData = $this->getReportData($startDate, $endDate, $departmentId, $employeeId, $user);
+            $reportData = $this->getReportData($startDate, $endDate, $departmentId, $employeeId, $user, $request->search);
 
             $totalStats = [
                 'attendance' => array_sum(array_column($reportData, 'attendance_count')),
@@ -59,7 +59,7 @@ class AnalyticsController extends Controller
             if ($role !== 'SUPERADMIN') {
                 $deptsQuery->where('company_id', $user->company_id);
             }
-            $departments = ($role === 'SUPERADMIN' || $role === 'OWNER')
+            $departments = ($role === 'SUPERADMIN' || $role === 'OWNER' || $role === 'MANAGER')
                 ? $deptsQuery->get(['id', 'name'])
                 : [];
 
@@ -70,6 +70,9 @@ class AnalyticsController extends Controller
                 }
                 if ($role === 'MANAGER') {
                     $empQuery->where('department_id', $user->department_id);
+                }
+                if ($departmentId) {
+                    $empQuery->where('department_id', $departmentId);
                 }
                 $employeeList = $empQuery->get(['id', 'full_name']);
             }
@@ -107,11 +110,20 @@ class AnalyticsController extends Controller
 
             $data = $query->paginate(15)->withQueryString();
         } elseif ($tab === 'research') {
-            // Dynamic data from database
-            $researchData = FaceRegistrationTest::orderBy('created_at', 'desc')
-                ->get();
+            // Dynamic data from database with filtering
+            $researchQuery = FaceRegistrationTest::orderBy('created_at', 'desc');
+            
+            if ($startDate && $endDate) {
+                $researchQuery->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
+            }
+            
+            if ($request->search) {
+                $researchQuery->where('user_name', 'like', "%{$request->search}%");
+            }
 
-            $data = $researchData->take(50)->map(function ($item, $index) {
+            $researchData = $researchQuery->get();
+
+            $data = $researchData->take(100)->map(function ($item, $index) {
                 return [
                     'id' => $item->id,
                     'no' => $index + 1,
@@ -138,7 +150,7 @@ class AnalyticsController extends Controller
             $accuracy = $total > 0 ? round(($successCount / $total) * 100, 1) : 0;
 
             // Attendance stats for summary cards
-            $reportData = $this->getReportData($startDate, $endDate, $departmentId, $employeeId, $user);
+            $reportData = $this->getReportData($startDate, $endDate, $departmentId, $employeeId, $user, $request->search);
             $totalStats = [
                 'attendance' => array_sum(array_column($reportData, 'attendance_count')),
                 'late' => array_sum(array_column($reportData, 'late_count')),
@@ -183,7 +195,7 @@ class AnalyticsController extends Controller
         ]);
     }
 
-    private function getReportData($startDate, $endDate, $departmentId, $employeeId, $user)
+    private function getReportData($startDate, $endDate, $departmentId, $employeeId, $user, $search = null)
     {
         $role = $user->role;
         $statsQuery = User::query();
@@ -203,6 +215,10 @@ class AnalyticsController extends Controller
         }
         if ($employeeId && $employeeId !== 'all' && $role !== 'EMPLOYEE') {
             $statsQuery->where('id', $employeeId);
+        }
+
+        if ($search) {
+            $statsQuery->where('full_name', 'like', "%{$search}%");
         }
 
         // Exclude system/owner roles from operational attendance analytics
@@ -225,12 +241,12 @@ class AnalyticsController extends Controller
 
         foreach ($employees as $emp) {
             $attendanceCount = Attendance::where('user_id', $emp->id)
-                ->where('type', 'IN')
+                ->whereIn('type', ['IN', 'CLOCK_IN'])
                 ->whereBetween('timestamp', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
                 ->count();
 
             $lateCount = Attendance::where('user_id', $emp->id)
-                ->where('type', 'IN')
+                ->whereIn('type', ['IN', 'CLOCK_IN'])
                 ->where('is_late', true)
                 ->whereBetween('timestamp', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
                 ->count();
@@ -243,7 +259,6 @@ class AnalyticsController extends Controller
                 })
                 ->get()
                 ->sum(function ($l) {
-                    // diffInDays returns absolute difference, +1 to include start_date
                     return Carbon::parse($l->start_date)->diffInDays(Carbon::parse($l->end_date)) + 1;
                 });
 
@@ -270,10 +285,16 @@ class AnalyticsController extends Controller
                 });
 
             foreach ($attendances as $day => $records) {
-                $in = $records->where('type', 'IN')->first();
-                $out = $records->where('type', 'OUT')->last();
-                if ($in && $out) {
-                    $workingTimeSeconds += Carbon::parse($in->timestamp)->diffInSeconds(Carbon::parse($out->timestamp));
+                $in = $records->whereIn('type', ['IN', 'CLOCK_IN'])->first();
+                $out = $records->whereIn('type', ['OUT', 'CLOCK_OUT'])->last();
+                
+                if ($in) {
+                    $startTime = Carbon::parse($in->timestamp);
+                    $endTime = $out ? Carbon::parse($out->timestamp) : ($day === now()->toDateString() ? now() : null);
+                    
+                    if ($endTime) {
+                        $workingTimeSeconds += $startTime->diffInSeconds($endTime);
+                    }
                 }
             }
             $workingHours = round($workingTimeSeconds / 3600, 2);
@@ -281,6 +302,7 @@ class AnalyticsController extends Controller
 
             $reportData[] = [
                 'id' => $emp->id,
+                'employee_id' => $emp->employee_id,
                 'name' => $emp->full_name,
                 'department' => $emp->department->name ?? 'N/A',
                 'attendance_count' => $attendanceCount,
@@ -303,8 +325,9 @@ class AnalyticsController extends Controller
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
         $departmentId = $request->input('department_id');
         $employeeId = $request->input('employee_id');
+        $search = $request->input('search');
 
-        $reportData = $this->getReportData($startDate, $endDate, $departmentId, $employeeId, $user);
+        $reportData = $this->getReportData($startDate, $endDate, $departmentId, $employeeId, $user, $search);
 
         $response = new StreamedResponse(function () use ($reportData) {
             $handle = fopen('php://output', 'w');

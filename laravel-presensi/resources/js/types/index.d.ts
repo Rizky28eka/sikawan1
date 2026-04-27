@@ -78,6 +78,7 @@ export interface AttendanceBiometric {
     spoof_flag?: string;
     attack_type?: string;
     evidence_path?: string;
+    detected_face_count?: number;
 }
 
 export interface AttendanceNetwork {
@@ -90,6 +91,9 @@ export interface AttendanceNetwork {
     signal_strength?: number;
     ip_country?: string;
     suspicious_network: boolean;
+    isp?: string;
+    connection_speed_mbps?: number;
+    latency_ms?: number;
 }
 
 export type PageProps<

@@ -1,6 +1,13 @@
 import { Input } from "@/Components/ui/input";
 import { Button } from "@/Components/ui/button";
 import { TabsList, TabsTrigger } from "@/Components/ui/tabs";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/Components/ui/select";
 import { 
     CalendarDays, 
     Search, 
@@ -12,15 +19,27 @@ import {
 interface Props {
     startDate: string;
     endDate: string;
+    departmentId?: string;
+    employeeId?: string;
+    departments: { id: string; name: string }[];
+    employeeList: { id: string; full_name: string }[];
     onDateChange: (type: 'start' | 'end', value: string) => void;
+    onFilterChange: (type: 'department_id' | 'employee_id', value: string) => void;
     onApply: (e?: React.FormEvent) => void;
+    role: string;
 }
 
 export default function AnalyticsFilters({ 
     startDate, 
     endDate, 
+    departmentId,
+    employeeId,
+    departments,
+    employeeList,
     onDateChange, 
-    onApply 
+    onFilterChange,
+    onApply,
+    role
 }: Props) {
     return (
         <div className="space-y-4">
@@ -50,36 +69,77 @@ export default function AnalyticsFilters({
 
             <form
                 onSubmit={onApply}
-                className="flex flex-wrap items-center gap-3 bg-muted/30 p-3 rounded-xl border border-border/40"
+                className="flex flex-wrap items-end gap-3 bg-muted/30 p-4 rounded-xl border border-border/40"
             >
-                <div className="flex items-center gap-2 flex-1 min-w-[300px]">
-                    <div className="relative flex-1">
-                        <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => onDateChange('start', e.target.value)}
-                            className="h-10 sm:h-11 pl-9 text-sm border-border/60 bg-background"
-                        />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 flex-1">
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Rentang Tanggal</label>
+                        <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                                <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => onDateChange('start', e.target.value)}
+                                    className="h-9 pl-9 text-xs border-border/60 bg-background"
+                                />
+                            </div>
+                            <span className="shrink-0 text-[10px] font-medium text-muted-foreground">s/d</span>
+                            <div className="relative flex-1">
+                                <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => onDateChange('end', e.target.value)}
+                                    className="h-9 pl-9 text-xs border-border/60 bg-background"
+                                />
+                            </div>
+                        </div>
                     </div>
-                    <span className="shrink-0 text-xs font-medium text-muted-foreground uppercase tracking-widest">s/d</span>
-                    <div className="relative flex-1">
-                        <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => onDateChange('end', e.target.value)}
-                            className="h-10 sm:h-11 pl-9 text-sm border-border/60 bg-background"
-                        />
-                    </div>
+
+                    {role !== 'EMPLOYEE' && (
+                        <>
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Departemen</label>
+                                <Select value={departmentId || "all"} onValueChange={(v) => onFilterChange('department_id', v === 'all' ? '' : v)}>
+                                    <SelectTrigger className="h-9 text-xs border-border/60 bg-background">
+                                        <SelectValue placeholder="Semua Departemen" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Semua Departemen</SelectItem>
+                                        {departments.map((d) => (
+                                            <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Karyawan</label>
+                                <Select value={employeeId || "all"} onValueChange={(v) => onFilterChange('employee_id', v === 'all' ? '' : v)}>
+                                    <SelectTrigger className="h-9 text-xs border-border/60 bg-background">
+                                        <SelectValue placeholder="Semua Karyawan" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Semua Karyawan</SelectItem>
+                                        {employeeList.map((e) => (
+                                            <SelectItem key={e.id} value={e.id}>{e.full_name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </>
+                    )}
                 </div>
-                <Button
-                    type="submit"
-                    size="sm"
-                    className="h-10 sm:h-11 px-6 text-xs font-medium uppercase tracking-wider shadow-lg shadow-primary/10 flex-1 sm:flex-none"
-                >
-                    <Search className="h-4 w-4 mr-2" /> Terapkan Filter
-                </Button>
+
+                <div className="flex gap-2 w-full lg:w-auto">
+                    <Button
+                        type="submit"
+                        className="h-9 px-6 text-xs font-bold uppercase tracking-wider shadow-sm flex-1 lg:flex-none"
+                    >
+                        <Search className="h-3.5 w-3.5 mr-2" /> Terapkan
+                    </Button>
+                </div>
             </form>
         </div>
     );

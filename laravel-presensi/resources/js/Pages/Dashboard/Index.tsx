@@ -1,5 +1,5 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, usePage, router } from "@inertiajs/react";
+import { Head, usePage, router, Link } from "@inertiajs/react";
 import { useEffect } from "react";
 import {
     Building,
@@ -180,7 +180,7 @@ export default function Dashboard({
                                 weekday: "long",
                                 day: "numeric",
                                 month: "long",
-                             })}
+                            })}
                         </Badge>
                     </div>
                 </div>
@@ -207,9 +207,16 @@ export default function Dashboard({
                                             size="lg"
                                             variant="secondary"
                                             className="h-14 px-8 shadow-lg font-medium"
+                                            asChild
                                         >
-                                            <Clock className="mr-2 h-5 w-5" />{" "}
-                                            Absen Sekarang
+                                            <Link
+                                                href={route(
+                                                    `${role.toLowerCase()}.attendance`,
+                                                )}
+                                            >
+                                                <Clock className="mr-2 h-5 w-5" />{" "}
+                                                Absen Sekarang
+                                            </Link>
                                         </Button>
                                     </div>
                                 </CardContent>
@@ -219,31 +226,61 @@ export default function Dashboard({
                                 {stats.map((stat, i) => {
                                     const Icon = iconMap[stat.icon] || Activity;
                                     const theme = statTheme(stat.label);
+
+                                    // Determine link based on label
+                                    let href = "#";
+                                    if (
+                                        stat.label.includes("Karyawan") ||
+                                        stat.label.includes("Anggota")
+                                    ) {
+                                        href = route(
+                                            `${role.toLowerCase()}.employees`,
+                                        );
+                                    } else if (
+                                        stat.label.includes("Presensi") ||
+                                        stat.label.includes("Hadir") ||
+                                        stat.label.includes("Terlambat")
+                                    ) {
+                                        href = route(
+                                            `${role.toLowerCase()}.attendance`,
+                                        );
+                                    } else if (
+                                        stat.label.includes("Approval") ||
+                                        stat.label.includes("Request")
+                                    ) {
+                                        href = route(
+                                            `${role.toLowerCase()}.requests`,
+                                        );
+                                    }
+
                                     return (
-                                        <Card
+                                        <Link
                                             key={i}
-                                            className="border-none bg-muted/30 shadow-none transition-colors hover:bg-muted/50"
+                                            href={href}
+                                            className="block"
                                         >
-                                            <CardContent className="p-5 text-center">
-                                                <div
-                                                    className={cn(
-                                                        "mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-background shadow-sm",
-                                                        theme.dot.replace(
-                                                            "bg-",
-                                                            "text-",
-                                                        ),
-                                                    )}
-                                                >
-                                                    <Icon className="h-5 w-5" />
-                                                </div>
-                                                <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
-                                                    {stat.label}
-                                                </div>
-                                                <div className="text-xl font-medium">
-                                                    {stat.value}
-                                                </div>
-                                            </CardContent>
-                                        </Card>
+                                            <Card className="border-none bg-muted/30 shadow-none transition-all hover:bg-muted/50 hover:scale-[1.02] active:scale-[0.98]">
+                                                <CardContent className="p-5 text-center">
+                                                    <div
+                                                        className={cn(
+                                                            "mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-background shadow-sm",
+                                                            theme.dot.replace(
+                                                                "bg-",
+                                                                "text-",
+                                                            ),
+                                                        )}
+                                                    >
+                                                        <Icon className="h-5 w-5" />
+                                                    </div>
+                                                    <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+                                                        {stat.label}
+                                                    </div>
+                                                    <div className="text-xl font-medium">
+                                                        {stat.value}
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        </Link>
                                     );
                                 })}
                             </div>
@@ -264,8 +301,12 @@ export default function Dashboard({
                                 <CardContent>
                                     <div className="flex h-32 items-end justify-between gap-2 px-4">
                                         {attendanceTrend.data.map((h, i) => {
-                                            const maxVal = Math.max(...attendanceTrend.data, 1);
-                                            const barHeight = (h / maxVal) * 100;
+                                            const maxVal = Math.max(
+                                                ...attendanceTrend.data,
+                                                1,
+                                            );
+                                            const barHeight =
+                                                (h / maxVal) * 100;
                                             return (
                                                 <div
                                                     key={i}
@@ -278,10 +319,15 @@ export default function Dashboard({
                                                                 ? "bg-muted"
                                                                 : "bg-primary/80 group-hover:bg-primary",
                                                         )}
-                                                        style={{ height: `${Math.max(barHeight, 5)}%` }}
+                                                        style={{
+                                                            height: `${Math.max(barHeight, 5)}%`,
+                                                        }}
                                                     />
                                                     <span className="text-[10px] text-muted-foreground font-medium">
-                                                        {attendanceTrend.labels[i]}
+                                                        {
+                                                            attendanceTrend
+                                                                .labels[i]
+                                                        }
                                                     </span>
                                                 </div>
                                             );
@@ -353,8 +399,15 @@ export default function Dashboard({
                                             variant="ghost"
                                             size="sm"
                                             className="text-amber-700 hover:bg-amber-500/10 font-medium"
+                                            asChild
                                         >
-                                            Cek
+                                            <Link
+                                                href={route(
+                                                    `${role.toLowerCase()}.requests`,
+                                                )}
+                                            >
+                                                Cek
+                                            </Link>
                                         </Button>
                                     </div>
                                     <div className="flex items-center justify-between rounded-xl bg-indigo-500/10 p-4 transition-colors hover:bg-indigo-500/20 shadow-xs border border-indigo-500/5">
@@ -367,7 +420,8 @@ export default function Dashboard({
                                                     Lembur
                                                 </p>
                                                 <p className="text-xs text-indigo-800/70 font-light">
-                                                    {summary.pending_overtime ?? 0}{" "}
+                                                    {summary.pending_overtime ??
+                                                        0}{" "}
                                                     menunggu
                                                 </p>
                                             </div>
@@ -376,8 +430,15 @@ export default function Dashboard({
                                             variant="ghost"
                                             size="sm"
                                             className="text-indigo-700 hover:bg-indigo-500/10 font-medium"
+                                            asChild
                                         >
-                                            Cek
+                                            <Link
+                                                href={route(
+                                                    `${role.toLowerCase()}.requests`,
+                                                )}
+                                            >
+                                                Cek
+                                            </Link>
                                         </Button>
                                     </div>
                                 </div>
@@ -397,10 +458,12 @@ export default function Dashboard({
                                         </div>
                                         <div>
                                             <p className="text-[13px] font-medium">
-                                                {summary.shift_name ?? 'Regular Shift'}
+                                                {summary.shift_name ??
+                                                    "Regular Shift"}
                                             </p>
                                             <p className="text-[11px] text-muted-foreground font-light">
-                                                {summary.shift_time ?? '08:00 - 17:00'}
+                                                {summary.shift_time ??
+                                                    "08:00 - 17:00"}
                                             </p>
                                         </div>
                                     </div>
@@ -413,7 +476,8 @@ export default function Dashboard({
                                                 Status Kehadiran
                                             </p>
                                             <p className="text-[11px] text-muted-foreground font-light">
-                                                {summary.attendance_status ?? 'Belum Absen'}
+                                                {summary.attendance_status ??
+                                                    "Belum Absen"}
                                             </p>
                                         </div>
                                     </div>

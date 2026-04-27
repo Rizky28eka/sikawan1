@@ -31,9 +31,6 @@ interface Props {
     search: string;
     onSearchChange: (value: string) => void;
     onSearchSubmit: () => void;
-    departmentId: string;
-    onDepartmentChange: (value: string) => void;
-    departments: { id: string, name: string }[];
     role: string;
 }
 
@@ -42,9 +39,6 @@ export default function PerformanceTable({
     search, 
     onSearchChange, 
     onSearchSubmit, 
-    departmentId, 
-    onDepartmentChange, 
-    departments,
     role
 }: Props) {
     const getBadgeClass = (count: number) => {
@@ -83,19 +77,6 @@ export default function PerformanceTable({
                             onKeyDown={(e) => e.key === "Enter" && onSearchSubmit()}
                         />
                     </div>
-                    {role !== "EMPLOYEE" && (
-                        <Select value={departmentId || "all"} onValueChange={onDepartmentChange}>
-                            <SelectTrigger className="h-8 w-[140px] shrink-0 text-xs">
-                                <SelectValue placeholder="Semua dept." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Semua Dept.</SelectItem>
-                                {departments.map((d) => (
-                                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
                 </div>
             </CardHeader>
 
@@ -157,7 +138,7 @@ export default function PerformanceTable({
                                                 </Avatar>
                                                 <div>
                                                     <div className="text-sm font-medium">{item.name}</div>
-                                                    <div className="text-xs text-muted-foreground">#{item.id?.substring(0, 8) || "N/A"}</div>
+                                                    <div className="text-[10px] text-muted-foreground font-mono uppercase">ID: {item.employee_id || "N/A"}</div>
                                                 </div>
                                             </div>
                                         </TableCell>

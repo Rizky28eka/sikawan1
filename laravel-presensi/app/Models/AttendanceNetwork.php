@@ -32,6 +32,7 @@ class AttendanceNetwork extends Model
         'ip_city',
         'ip_geolocation',
         'suspicious_network',
+        'isp',
     ];
 
     protected $casts = [

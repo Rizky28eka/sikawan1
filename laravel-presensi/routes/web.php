@@ -34,10 +34,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/manager/dashboard', [DashboardController::class, 'index'])->name('manager.dashboard');
     Route::get('/employee/dashboard', [DashboardController::class, 'index'])->name('employee.dashboard');
 
+    Route::get('/superadmin/attendance', [AttendanceController::class, 'index'])->name('superadmin.attendance');
+    Route::get('/superadmin/attendance/{id}', [AttendanceController::class, 'show'])->name('superadmin.attendance.show');
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance');
+    Route::get('/attendance/{id}', [AttendanceController::class, 'show'])->name('attendance.show');
     Route::get('/owner/attendance', [AttendanceController::class, 'index'])->name('owner.attendance');
+    Route::get('/owner/attendance/{id}', [AttendanceController::class, 'show'])->name('owner.attendance.show');
     Route::get('/manager/attendance', [AttendanceController::class, 'index'])->name('manager.attendance');
+    Route::get('/manager/attendance/{id}', [AttendanceController::class, 'show'])->name('manager.attendance.show');
     Route::get('/employee/attendance', [AttendanceController::class, 'index'])->name('employee.attendance');
+    Route::get('/employee/attendance/{id}', [AttendanceController::class, 'show'])->name('employee.attendance.show');
 
     Route::get('/checkincheckout', [AttendanceController::class, 'check'])->name('attendance.check');
     Route::get('/owner/checkincheckout', [AttendanceController::class, 'check'])->name('owner.attendance.check');

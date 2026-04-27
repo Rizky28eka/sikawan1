@@ -114,4 +114,34 @@ class AttendanceController extends Controller
 
         return redirect()->back()->withErrors(['error' => $result->message]);
     }
+
+    public function show($id)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        $role = $user->role;
+
+        $attendance = Attendance::with([
+            'user:id,full_name,employee_id,department_id,site_id,profile_photo',
+            'user.department:id,name',
+            'site:id,name',
+            'location',
+            'biometric',
+            'network',
+        ])->findOrFail($id);
+
+        // Security check: ensure user has permission to view this specific record
+        if ($role === 'OWNER') {
+            if ($attendance->company_id !== $user->company_id) abort(403);
+        } elseif ($role === 'MANAGER') {
+            if ($attendance->user->department_id !== $user->department_id) abort(403);
+        } elseif ($role === 'EMPLOYEE') {
+            if ($attendance->user_id !== $user->id) abort(403);
+        }
+
+        return Inertia::render('Attendance/Show', [
+            'attendance' => $attendance,
+            'role' => $role,
+        ]);
+    }
 }

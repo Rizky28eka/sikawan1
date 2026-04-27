@@ -31,7 +31,7 @@ class AttendanceController extends Controller
      */
     public function store(AttendanceData $data)
     {
-        return $this->processAttendance($data, 'Mobile App');
+        return $this->processAttendance($data, 'Web System');
     }
 
     /**
@@ -57,6 +57,20 @@ class AttendanceController extends Controller
             'user_id' => $user->id,
             'type' => $data->type,
         ]);
+
+        // 0. Validation: Only once per day per type
+        $alreadyDone = Attendance::where('user_id', $user->id)
+            ->whereDate('timestamp', now()->toDateString())
+            ->where('type', $data->type)
+            ->exists();
+
+        if ($alreadyDone) {
+            $typeLabel = $data->type === 'CLOCK_IN' ? 'Masuk (IN)' : 'Keluar (OUT)';
+            return response()->json([
+                'success' => false,
+                'message' => "Anda sudah melakukan presensi {$typeLabel} hari ini. Masing-masing tipe hanya diperbolehkan sekali sehari.",
+            ], 422);
+        }
 
         // 1. Get User's Face Embedding
         $biometric = FaceBiometric::where('user_id', $user->id)->first();
@@ -138,11 +152,16 @@ class AttendanceController extends Controller
         // 4. Record Attendance
         $status = 'PRESENT';
         $isLate = false;
+        $lateDuration = 0;
+        
         if ($data->type === 'CLOCK_IN' && ($shift = $user->shift)) {
-            $workingStart = Carbon::parse($shift->start_time);
-            if (now()->gt($workingStart->addMinutes($shift->late_tolerance))) {
+            $workingStart = Carbon::parse(now()->toDateString() . ' ' . $shift->start_time);
+            $currentTime = now();
+            
+            if ($currentTime->gt($workingStart->addMinutes($shift->late_tolerance))) {
                 $isLate = true;
                 $status = 'LATE';
+                $lateDuration = $currentTime->diffInMinutes($workingStart);
             }
         }
 
@@ -151,10 +170,12 @@ class AttendanceController extends Controller
             'user_id' => $user->id,
             'company_id' => $user->company_id,
             'site_id' => $user->site_id,
+            'shift_id' => $user->shift_id,
             'timestamp' => now(),
             'type' => $data->type,
             'status' => $status,
             'is_late' => $isLate,
+            'late_duration' => $lateDuration,
             'confidence' => $confidence,
             'latitude' => $data->latitude,
             'longitude' => $data->longitude,
@@ -269,17 +290,36 @@ class AttendanceController extends Controller
                 'location_age' => now()->diffInSeconds(Carbon::parse($data->telemetry_location['timestamp_device'] ?? now())),
             ]);
 
-            // Network Telemetry
+            // Network Telemetry (Enhanced Capture)
+            $clientIp = request()->header('X-Forwarded-For') 
+                ?? request()->header('X-Real-IP') 
+                ?? request()->ip() 
+                ?? '127.0.0.1';
+
+            // Clean up IP if it's a comma separated list (X-Forwarded-For)
+            $clientIp = trim(explode(',', $clientIp)[0]);
+
+            $ispName = 'Local Network';
+            try {
+                $location = geoip()->getLocation($clientIp);
+                $ispName = $location->organization ?? 'Local Network';
+                if ($clientIp === '127.0.0.1') {
+                    $ispName = 'Development Link';
+                }
+            } catch (\Exception $e) {
+                Log::warning('GeoIP failure: ' . $e->getMessage());
+            }
+
             AttendanceNetwork::create([
                 'attendance_id' => $attendance->id,
-                'ip_address' => request()->ip(),
-                'ip_address_public' => request()->ip(),
-                'network_type' => $data->telemetry_network['type'] ?? 'UNKNOWN',
+                'ip_address' => $clientIp,
+                'ip_address_public' => $clientIp,
+                'network_type' => $data->telemetry_network['type'] ?? 'WEB/WIFI',
                 'cellular_network_type' => $data->telemetry_network['effective_type'] ?? null,
                 'connection_speed_mbps' => $this->sanitizeNumericalData($data->telemetry_network['downlink'] ?? 0),
                 'latency_ms' => (int) ($data->telemetry_network['rtt'] ?? 0),
                 'vpn_detected' => (bool) ($data->telemetry_network['vpn_detected'] ?? false),
-                'isp' => geoip()->getLocation(request()->ip())->organization,
+                'isp' => $ispName,
             ]);
 
         } catch (\Exception $e) {

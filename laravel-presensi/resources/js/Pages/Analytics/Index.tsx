@@ -95,8 +95,14 @@ export default function Index({
                     <AnalyticsFilters 
                         startDate={localFilters.start_date}
                         endDate={localFilters.end_date}
+                        departmentId={localFilters.department_id}
+                        employeeId={localFilters.employee_id}
+                        departments={departments}
+                        employeeList={employeeList}
                         onDateChange={(type, val) => setLocalFilters({ ...localFilters, [type === 'start' ? 'start_date' : 'end_date']: val })}
+                        onFilterChange={(type, val) => setLocalFilters({ ...localFilters, [type]: val })}
                         onApply={applyFilters}
+                        role={role}
                     />
 
                     <TabsContent value="reports" className="space-y-4">
@@ -106,9 +112,6 @@ export default function Index({
                             search={search}
                             onSearchChange={setSearch}
                             onSearchSubmit={applyFilters}
-                            departmentId={localFilters.department_id || ""}
-                            onDepartmentChange={(v) => setLocalFilters({ ...localFilters, department_id: v === "all" ? "" : v })}
-                            departments={departments}
                             role={role}
                         />
                     </TabsContent>
